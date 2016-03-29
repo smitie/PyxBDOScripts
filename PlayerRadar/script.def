@@ -1,0 +1,8 @@
+[script]
+name=PlayerRadar
+type=script
+
+[files]
+file=main.lua
+
+[dependencies]

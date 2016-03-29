@@ -1,0 +1,8 @@
+[script]
+name=WorkerRefresh
+type=script
+
+[files]
+file=main.lua
+
+[dependencies]
