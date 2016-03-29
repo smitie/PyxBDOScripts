@@ -81,6 +81,7 @@ function RepairState:Run()
                     self.LastRepairTickcount = Pyx.System.TickCount
                     Bot.RepairForced = false
                     self.HasRepaired = false
+                    self.ArrivedToRepairTickcount = 0
                     if Dialog.IsTalking then
                         Dialog.ClickExit()
                     end

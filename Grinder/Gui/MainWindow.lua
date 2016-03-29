@@ -181,9 +181,10 @@ function MainWindow.DrawMainWindow()
 			_,Bot.Settings.WarehouseDepositMoney = ImGui.Checkbox("##id_guid_warehouse_deposit_money", Bot.Settings.WarehouseDepositMoney)
 			ImGui.SameLine()
 			ImGui.Text("Deposit Money")
-			ImGui.SameLine()
-			_,Bot.Settings.WarehouseDepositItems = ImGui.Checkbox("##id_guid_warehouse_deposit_items", Bot.Settings.WarehouseDepositItems)
-			_, Bot.Settings.WarehouseKeepMoney = ImGui.SliderInt("Money to Keep##id_gui_warehouse_keep_money", Bot.Settings.WarehouseKeepMoney, 0, 1000000)
+			
+            _, Bot.Settings.WarehouseKeepMoney = ImGui.SliderInt("Money to Keep##id_gui_warehouse_keep_money", Bot.Settings.WarehouseKeepMoney, 0, 1000000)
+			
+            _,Bot.Settings.WarehouseDepositItems = ImGui.Checkbox("##id_guid_warehouse_deposit_items", Bot.Settings.WarehouseDepositItems)
 			ImGui.SameLine()
 			ImGui.Text("Deposit Items")
 			ImGui.Text("Never Deposit these Items")

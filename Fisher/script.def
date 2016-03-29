@@ -1,5 +1,5 @@
 [script]
-name=Fisher
+name=[Bot] Fisher
 type=script
 
 [files]
@@ -7,6 +7,7 @@ file=Data/Profile.lua
 file=Data/Settings.lua
 file=Gui/MainWindow.lua
 file=Gui/ProfileEditor.lua
+file=States/TradeManager.lua
 file=States/BuildNavigation.lua
 file=States/Loot.lua
 file=States/HookHandleGame.lua
@@ -16,6 +17,8 @@ file=States/EquipFishingRod.lua
 file=States/UnequipFishingRod.lua
 file=States/MoveToFishingSpot.lua
 file=States/Idle.lua
+file=States/Vendor.lua
+file=States/Warehouse.lua
 file=Helpers/Rendering.lua
 file=Bot.lua
 file=Main.lua
@@ -25,3 +28,4 @@ file=../libtable/script.def
 file=../libjson/script.def
 file=../libfsm/script.def
 file=../libbdo/script.def
+file=../libtimers/script.def

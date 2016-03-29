@@ -27,9 +27,19 @@ function Settings.new()
     self.VendorWhite = true
     self.VendorGreen = true
     self.VendorBlue = false
+    self.NeverVendor = { }
+    self.VendorafterTradeManager = true
+
+    self.WarehouseAfterVendor = true
+    self.WarehouseAfterTradeManager = true
+	self.WarehouseDepositMoney = true
+	self.WarehouseKeepMoney = 100000
+	self.WarehouseDepositItems = false
+    self.NeverWarehouse = { }
+
     
-    self.TakeLoot = false
-    self.OnDeathAction = SETTINGS_ON_DEATH_STOP_BOT
+    self.TradeManagerOnInventoryFull = true
+    self.IgnoreUntradeAbleItems = false
     
   return self
 end
@@ -40,15 +50,11 @@ function Settings:CanSellItem(slot)
         return false
     end
     
-    if not slot.IsFilled then
+    if table.find(self.NeverVendor, slot.ItemEnchantStaticStatus.Name) then
         return false
     end
     
-    if self.HPPotionName == slot.ItemEnchantStaticStatus.Name then
-        return false
-    end
-    
-    if self.MPPotionName == slot.ItemEnchantStaticStatus.Name then
+    if slot.ItemEnchantStaticStatus.Grade >= ITEM_GRADE_GOLD then
         return false
     end
     
@@ -66,4 +72,17 @@ function Settings:CanSellItem(slot)
     
     return false
     
+end
+
+function Settings:CanWarehouseItem(item)
+
+	if not item then
+		return false
+	end
+
+	if table.find(self.NeverWarehouse, item.ItemEnchantStaticStatus.Name) then
+		return false
+	end
+
+	return true
 end

@@ -1,6 +1,7 @@
 Bot = { }
 Bot.Settings = Settings()
 Bot.Running = false
+Bot.TradeManagerForced = false
 Bot.Fsm = FSM()
 
 function Bot.Start()
@@ -24,6 +25,7 @@ function Bot.Start()
         
         ProfileEditor.Visible = false
         Navigation.MesherEnabled = false
+        Bot.TradeManagerForced = false
         
         Bot.Fsm = FSM()
         Bot.Fsm.ShowOutput = true
@@ -32,6 +34,9 @@ function Bot.Start()
         Bot.Fsm:AddState(HookFishHandleGameState())
         Bot.Fsm:AddState(HookFishState())
         Bot.Fsm:AddState(UnequipFishingRodState())
+        Bot.Fsm:AddState(TradeManagerState())
+        Bot.Fsm:AddState(VendorState())
+   		Bot.Fsm:AddState(WarehouseState())
         Bot.Fsm:AddState(EquipFishingRodState())
         Bot.Fsm:AddState(StartFishingState())
         Bot.Fsm:AddState(MoveToFishingSpotState())
@@ -42,7 +47,7 @@ function Bot.Start()
 end
 
 function Bot.Stop()
-    --Navigator.Stop()
+    Navigator.Stop()
     Bot.Running = false
 end
 

@@ -6,6 +6,7 @@ Bot.Combat = nil
 Bot.CombatPull = nil
 Bot.VendorForced = false
 Bot.RepairForced = false
+Bot.WarehouseForced = true
 
 
 function Bot.Start()

@@ -97,7 +97,31 @@ function ProfileEditor.DrawProfileEditor()
                 ProfileEditor.CurrentProfile.TradeManagerNpcPosition.Z = 0
             end
         end
-        
+                if ImGui.CollapsingHeader("Vendor npc", "id_profile_editor_Vendor", true, false) then
+            if string.len(ProfileEditor.CurrentProfile.VendorNpcName) > 0 then
+                ImGui.Text("Name : " .. ProfileEditor.CurrentProfile.VendorNpcName .. " (" .. math.floor(ProfileEditor.CurrentProfile:GetVendorPosition().Distance3DFromMe / 100) .. "y)")
+            else
+                ImGui.Text("Name : Not set")
+            end
+            if ImGui.Button("Set##id_profile_set_Vendor" , ImVec2(ImGui.GetContentRegionAvailWidth() / 2, 20)) then
+                local npcs = GetNpcs()
+                if table.length(npcs) > 0 then
+                    local VendorNpc = npcs[1]
+                    ProfileEditor.CurrentProfile.VendorNpcName = VendorNpc.Name
+                    ProfileEditor.CurrentProfile.VendorNpcPosition.X = VendorNpc.Position.X
+                    ProfileEditor.CurrentProfile.VendorNpcPosition.Y = VendorNpc.Position.Y
+                    ProfileEditor.CurrentProfile.VendorNpcPosition.Z = VendorNpc.Position.Z
+                end
+            end
+            ImGui.SameLine()
+            if ImGui.Button("Clear##id_profile_clear_Vendor", ImVec2(ImGui.GetContentRegionAvailWidth(), 20)) then
+                ProfileEditor.CurrentProfile.VendorNpcName = ""
+                ProfileEditor.CurrentProfile.VendorNpcPosition.X = 0
+                ProfileEditor.CurrentProfile.VendorNpcPosition.Y = 0
+                ProfileEditor.CurrentProfile.VendorNpcPosition.Z = 0
+            end
+        end
+
         if ImGui.CollapsingHeader("Warehouse npc", "id_profile_editor_Warehouse", true, false) then
             if string.len(ProfileEditor.CurrentProfile.WarehouseNpcName) > 0 then
                 ImGui.Text("Name : " .. ProfileEditor.CurrentProfile.WarehouseNpcName .. " (" .. math.floor(ProfileEditor.CurrentProfile:GetWarehousePosition().Distance3DFromMe / 100) .. "y)")
@@ -135,8 +159,12 @@ function ProfileEditor.RefreshAvailableProfiles()
     end
 end
 
+
+
 function ProfileEditor.SaveProfile(name)
     
+
+
     local profileFilename = "\\Profiles\\" .. name .. ".json"
     local meshFilename = "\\Profiles\\" .. name .. ".mesh"
     local objFilename = "\\Profiles\\" .. name .. ".obj"

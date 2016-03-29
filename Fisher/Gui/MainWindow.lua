@@ -6,6 +6,13 @@ MainWindow = { }
 ------------------------------------------------------------------------------
 -- Internal variables (Don't touch this if you don't know what you are doing !)
 -----------------------------------------------------------------------------
+MainWindow.InventoryComboSelectedIndex = 0
+MainWindow.InventoryName = { }
+MainWindow.InventorySelectedIndex = 0
+
+MainWindow.WarehouseComboSelectedIndex = 0
+MainWindow.WarehouseSelectedIndex = 0
+MainWindow.WarehouseName = { }
 
 -----------------------------------------------------------------------------
 -- MainWindow Functions
@@ -39,11 +46,18 @@ function MainWindow.DrawMainWindow()
                 if ImGui.Button("Stop##btn_stop_bot", ImVec2(ImGui.GetContentRegionAvailWidth(), 20)) then
                     Bot.Stop()
                 end
+                if ImGui.Button("Force trade manager##btn_force_trademanager", ImVec2(ImGui.GetContentRegionAvailWidth(), 20)) then
+                    Bot.TradeManagerForced = true
+                end
             end
-        end       
+        end  
+        if ImGui.CollapsingHeader("Looting", "id_gui_looting", true, false) then
+        _,Bot.Settings.IgnoreUntradeAbleItems = ImGui.Checkbox("Ignore untradeable items##id_guid_looting_ignore_untradeable", Bot.Settings.IgnoreUntradeAbleItems)
+        end     
         
         if ImGui.CollapsingHeader("Vendor", "id_gui_vendor", true, false) then
            _,Bot.Settings.VendorOnInventoryFull = ImGui.Checkbox("Vendor when inventory is full##id_guid_vendor_full_inventory", Bot.Settings.VendorOnInventoryFull)
+           _,Bot.Settings.VendorafterTradeManager = ImGui.Checkbox("Vendor after Trader##id_guid_vendor_full_inventory", Bot.Settings.VendorafterTradeManager)
            _,Bot.Settings.VendorOnWeight = ImGui.Checkbox("Vendor when you are too heavy##id_guid_vendor_weight", Bot.Settings.VendorOnWeight)
            _,Bot.Settings.VendorWhite = ImGui.Checkbox("##id_guid_vendor_sell_white", Bot.Settings.VendorWhite)
            ImGui.SameLine()
@@ -54,6 +68,62 @@ function MainWindow.DrawMainWindow()
            _,Bot.Settings.VendorBlue = ImGui.Checkbox("##id_guid_vendor_sell_blue", Bot.Settings.VendorBlue)
            ImGui.SameLine()
            ImGui.TextColored(ImVec4(0.40,0.6,1,1), "Sell blue")
+           
+				MainWindow.UpdateInventoryList()
+				valueChanged, MainWindow.InventoryComboSelectedIndex = ImGui.Combo("##id_guid_vendor_inventory_combo_select", MainWindow.InventoryComboSelectedIndex, MainWindow.InventoryName)
+				if valueChanged then
+					local inventoryName = MainWindow.InventoryName[MainWindow.InventoryComboSelectedIndex]
+					if not table.find(Bot.Settings.NeverVendor, inventoryName) then
+
+						table.insert(Bot.Settings.NeverVendor, inventoryName)
+					end 
+					MainWindow.InventoryComboSelectedIndex = 0
+				end
+				_, MainWindow.InventorySelectedIndex = ImGui.ListBox("##id_guid_vendor_neversell", MainWindow.InventorySelectedIndex, Bot.Settings.NeverVendor, 5)
+				if ImGui.Button("Remove Item##id_guid_vendor_neversell_remove", ImVec2(ImGui.GetContentRegionAvailWidth(), 20)) then
+					if MainWindow.InventorySelectedIndex > 0 and MainWindow.InventorySelectedIndex <= table.length(Bot.Settings.NeverVendor) then
+						table.remove(Bot.Settings.NeverVendor, MainWindow.InventorySelectedIndex)
+						MainWindow.InventorySelectedIndex = 0
+					end
+				end
+
+        end 
+        		if ImGui.CollapsingHeader("Warehouse", "id_gui_warehouse", true, false) then
+			_,Bot.Settings.WarehouseAfterVendor = ImGui.Checkbox("##id_guid_warehouse_after_vendor", Bot.Settings.WarehouseAfterVendor)
+			ImGui.SameLine()
+			ImGui.Text("Deposit after Vendor")
+			_,Bot.Settings.WarehouseAfterVendor = ImGui.Checkbox("##id_guid_warehouse_after_trader", Bot.Settings.WarehouseAfterTradeManager)
+			ImGui.SameLine()
+			ImGui.Text("Deposit after trader")
+			_,Bot.Settings.WarehouseDepositMoney = ImGui.Checkbox("##id_guid_warehouse_deposit_money", Bot.Settings.WarehouseDepositMoney)
+			ImGui.SameLine()
+			ImGui.Text("Deposit Money")
+			_, Bot.Settings.WarehouseKeepMoney = ImGui.SliderInt("Money to Keep##id_gui_warehouse_keep_money", Bot.Settings.WarehouseKeepMoney, 0, 1000000)
+			_,Bot.Settings.WarehouseDepositItems = ImGui.Checkbox("##id_guid_warehouse_deposit_items", Bot.Settings.WarehouseDepositItems)
+			ImGui.SameLine()
+			ImGui.Text("Deposit Items")
+			ImGui.Text("Never Deposit these Items")
+			valueChanged, MainWindow.WarehouseComboSelectedIndex = ImGui.Combo("##id_guid_warehouse_inventory_combo_select", MainWindow.WarehouseComboSelectedIndex, MainWindow.InventoryName)
+			if valueChanged then
+				local inventoryName = MainWindow.InventoryName[MainWindow.WarehouseComboSelectedIndex]
+				if not table.find(Bot.Settings.NeverWarehouse, inventoryName) then
+
+					table.insert(Bot.Settings.NeverWarehouse, inventoryName)
+				end 
+				MainWindow.WarehouseComboSelectedIndex = 0
+			end
+			_, MainWindow.WarehouseSelectedIndex = ImGui.ListBox("##id_guid_warehouse_neverdeposit", MainWindow.WarehouseSelectedIndex, Bot.Settings.NeverWarehouse, 5)
+			if ImGui.Button("Remove Item##id_guid_warehouse_neverdeposit_remove", ImVec2(ImGui.GetContentRegionAvailWidth(), 20)) then
+				if MainWindow.WarehouseSelectedIndex > 0 and MainWindow.WarehouseSelectedIndex <= table.length(Bot.Settings.NeverWarehouse) then
+					table.remove(Bot.Settings.NeverWarehouse, MainWindow.WarehouseSelectedIndex)
+					MainWindow.WarehouseSelectedIndex = 0
+				end
+			end
+
+		end
+        
+        if ImGui.CollapsingHeader("Trade Manager", "id_gui_trademanager", true, false) then
+           _,Bot.Settings.TradeManagerOnInventoryFull = ImGui.Checkbox("Sell at trade manager when inventory is full##id_guid_trademanager_full_inventory", Bot.Settings.TradeManagerOnInventoryFull)
         end
         ImGui.End()
     end
@@ -63,3 +133,17 @@ function MainWindow.OnDrawGuiCallback()
     MainWindow.DrawMainWindow()
 end
 
+
+function MainWindow.UpdateInventoryList()
+	MainWindow.InventoryName = { }
+	local selfPlayer = GetSelfPlayer()
+	if selfPlayer then
+		for k,v in pairs(selfPlayer.Inventory.Items) do
+        
+			if not table.find(MainWindow.InventoryName, v.ItemEnchantStaticStatus.Name) then
+				table.insert(MainWindow.InventoryName, v.ItemEnchantStaticStatus.Name)
+--            print("Added: "..v.ItemEnchantStaticStatus.Name)
+			end
+		end
+	end
+end

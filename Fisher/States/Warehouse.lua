@@ -93,8 +93,14 @@ function WarehouseState:Run()
     local vendorPosition = ProfileEditor.CurrentProfile:GetWarehousePosition()
 
     if vendorPosition.Distance3DFromMe > 300 then
-        Bot.CallCombatRoaming()
         Navigator.MoveTo(vendorPosition)
+        local equippedItem = selfPlayer:GetEquippedItem(INVENTORY_SLOT_RIGHT_HAND)
+        if equippedItem ~= nil then
+            if equippedItem.ItemEnchantStaticStatus.IsFishingRod then
+                selfPlayer:UnequipItem(INVENTORY_SLOT_RIGHT_HAND)
+            end
+        end
+
         if self.State > 1 then
             self:Exit()
         end

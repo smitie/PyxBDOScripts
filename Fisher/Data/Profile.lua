@@ -12,6 +12,8 @@ function Profile.new()
     self.AttackAnyMonsters = true
     self.FishSpotPosition = { X = 0, Y = 0, Z = 0 }
     self.FishSpotRotation = 0
+    self.VendorNpcName = ""
+    self.VendorNpcPosition = { X = 0, Y = 0, Z = 0 }
     self.TradeManagerNpcName = ""
     self.TradeManagerNpcPosition = { X = 0, Y = 0, Z = 0 }
     self.WarehouseNpcName = ""
@@ -49,4 +51,12 @@ end
 
 function Profile:HasWarehouse()
     return string.len(self.WarehouseNpcName) > 0
+end
+
+function Profile:GetVendorPosition()
+    return Vector3(self.VendorNpcPosition.X, self.VendorNpcPosition.Y, self.VendorNpcPosition.Z)
+end
+
+function Profile:HasVendor()
+    return string.len(self.VendorNpcName) > 0
 end

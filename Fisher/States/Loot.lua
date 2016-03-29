@@ -30,11 +30,20 @@ function LootState:NeedToRun()
         return false
     end
     
-    return selfPlayer.LootState > 0
+    return Looting.IsLooting
     
 end
 
 function LootState:Run()
-    local selfPlayer = GetSelfPlayer()
-    selfPlayer:LootAllItemsToPlayer()
+    local numLoots = Looting.ItemCount
+    for i=0,numLoots-1 do 
+        local lootItem = Looting.GetItemByIndex(i)
+        if lootItem then
+            if not Bot.Settings.IgnoreUntradeAbleItems or lootItem.ItemEnchantStaticStatus.IsTradeAble then
+                print("Loot item : " .. lootItem.ItemEnchantStaticStatus.Name)
+                Looting.Take(i)
+            end
+        end
+    end
+    Looting.Close()
 end
