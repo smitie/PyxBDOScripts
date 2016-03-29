@@ -1,0 +1,8 @@
+[script]
+name=[Development] Testing
+type=script
+
+[files]
+file=main.lua
+
+[dependencies]
