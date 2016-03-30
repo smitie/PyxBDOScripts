@@ -10,11 +10,8 @@ g_ShowTraceline = false
 ---------------------------------------------
 
 function DrawPlayers()
-
     _, g_ShowTraceline = ImGui.Checkbox("Draw tracelines", g_ShowTraceline)
-
-
-    ImGui.Columns(2, "Players")
+    ImGui.Columns(2, "Horses")
     ImGui.Separator()
     ImGui.Text("Name")
     ImGui.NextColumn()
@@ -24,8 +21,7 @@ function DrawPlayers()
     local characters = GetActors();
     table.sort(characters, function(a,b) return a.Position.Distance3DFromMe < b.Position.Distance3DFromMe end)
     for k,v in pairs(characters) do
-        if v.IsPlayer
-        then
+        if string.find(v.Name,"horse") then         
             ImGui.Text(v.Name)
             ImGui.NextColumn()
 
@@ -35,7 +31,6 @@ function DrawPlayers()
     end
     ImGui.Columns(1)
     ImGui.Spacing()
-
 end
 
 function OnRender3D()
@@ -46,8 +41,7 @@ function OnRender3D()
         local selfPlayer = GetSelfPlayer()
         local count = 0
         for k,v in pairs(characters) do
-            if v.IsPlayer
-            then
+            if string.find(v.Name,"horse") then 
                 local distance = v.Position.Distance3DFromMe
                 local color = 0xFFFF0000
                 if distance < 1000 then -- Red 
@@ -71,7 +65,7 @@ end
 
 function OnDrawGuiCallback()
 	local shouldDisplay;
-	_, shouldDisplay = ImGui.Begin("Player radar", true, ImVec2(300, 300), -1.0)
+	_, shouldDisplay = ImGui.Begin("Horse radar", true, ImVec2(300, 300), -1.0)
 	if shouldDisplay then	
         DrawPlayers()
         ImGui.End()
