@@ -1,6 +1,8 @@
+
 WarehouseState = { }
 WarehouseState.__index = WarehouseState
 WarehouseState.Name = "Warehouse"
+WarehouseState.DefaultSettings = { NpcName = "", NpcPosition = { X = 0, Y = 0, Z = 0 }, DepositItems = true, DepositMoney = true, MoneyToKeep = 10000, IgnoreItemsNamed = { } }
 
 setmetatable(WarehouseState, {
     __call = function(cls, ...)
@@ -10,20 +12,23 @@ setmetatable(WarehouseState, {
 
 function WarehouseState.new()
     local self = setmetatable( { }, WarehouseState)
-    self.LastVendorTickcount = 0
-    self.ArrivedToVendorTickcount = 0
-    self.RequestedItemsList = false
-    self.RequestedItemListTickcount = 0
-    self.ItemSold = false
+
+    self.Settings = WarehouseState.DefaultSettings
 
     self.State = 0
     -- 0 = Nothing, 1 = Moving, 2 = Arrived
     self.DepositList = nil
 
-    self.LastWarehouseUseTimer = nil
+    self.LastUseTimer = nil
     self.SleepTimer = nil
     self.CurrentDepositList = { }
     self.DepositedMoney = false
+    self.Forced = false
+
+    -- Overideable functions
+    self.ItemCheckFunction = nil
+    self.CallWhenCompleted = nil
+    self.CallWhileMoving = nil
 
     return self
 end
@@ -32,8 +37,7 @@ function WarehouseState:NeedToRun()
 
     local selfPlayer = GetSelfPlayer()
 
-
-    if self.LastWarehouseUseTimer ~= nil and not self.LastWarehouseUseTimer:Expired() then
+    if self.LastUseTimer ~= nil and not self.LastUseTimer:Expired() then
         return false
     end
 
@@ -45,26 +49,27 @@ function WarehouseState:NeedToRun()
         return false
     end
 
-    if not ProfileEditor.CurrentProfile:HasWarehouse() then
+    if not self:HasNpc() then
         return false
     end
 
-    if Bot.WarehouseForced and Navigator.CanMoveTo(ProfileEditor.CurrentProfile:GetWarehousePosition()) then
+    if self.Forced and Navigator.CanMoveTo(self:GetPosition()) then
         return true
     else
-        Bot.WarehouseForced = false
-
+        self.Forced = false
     end
 
-    if Bot.Settings.WarehouseDepositItems and selfPlayer.Inventory.FreeSlots <= 1 and
-        table.length(self:GetItemsToWarehouse()) > 0 and
-        Navigator.CanMoveTo(ProfileEditor.CurrentProfile:GetWarehousePosition()) then
+    if self.Settings.DepositItems and selfPlayer.Inventory.FreeSlots <= 1 and
+        table.length(self:GetItems()) > 0 and
+        Navigator.CanMoveTo(self:GetPosition()) then
+        self.Forced = true
         return true
     end
 
     if selfPlayer.WeightPercent >= 95 and
-        table.length(self:GetItemsToSell()) > 0 and
-        Navigator.CanMoveTo(ProfileEditor.CurrentProfile:GetWarehousePosition()) then
+        table.length(self:GetItems()) > 0 and
+        Navigator.CanMoveTo(self:GetPosition()) then
+        self.Forced = true
         return true
     end
 
@@ -78,10 +83,10 @@ function WarehouseState:Exit()
             Dialog.ClickExit()
         end
         self.State = 0
-        self.LastWarehouseUseTimer = PyxTimer:New(6000)
-        self.LastWarehouseUseTimer:Start()
+        self.LastUseTimer = PyxTimer:New(6000)
+        self.LastUseTimer:Start()
         self.SleepTimer = nil
-        Bot.WarehouseForced = false
+        self.Forced = false
         self.DepositedMoney = false
 
     end
@@ -90,10 +95,14 @@ end
 
 function WarehouseState:Run()
     local selfPlayer = GetSelfPlayer()
-    local vendorPosition = ProfileEditor.CurrentProfile:GetWarehousePosition()
+    local vendorPosition = self:GetPosition()
+
 
     if vendorPosition.Distance3DFromMe > 300 then
-        Bot.CallCombatRoaming()
+        if self.CallWhileMoving then
+            self.CallWhileMoving(self)
+        end
+
         Navigator.MoveTo(vendorPosition)
         if self.State > 1 then
             self:Exit()
@@ -101,6 +110,7 @@ function WarehouseState:Run()
         self.State = 1
         return
     end
+
     Navigator.Stop()
 
     if self.SleepTimer ~= nil and self.SleepTimer:IsRunning() and not self.SleepTimer:Expired() then
@@ -138,13 +148,13 @@ function WarehouseState:Run()
         self.SleepTimer = PyxTimer:New(1)
         self.SleepTimer:Start()
         self.State = 3
-        self.CurrentDepositList = self:GetItemsToDeposit()
+        self.CurrentDepositList = self:GetItems()
         return
     end
 
     if self.State == 3 then
-        if self.DepositedMoney == false and Bot.Settings.WarehouseDepositMoney == true then
-            local toDeposit = selfPlayer.Inventory.Money - Bot.Settings.WarehouseKeepMoney
+        if self.DepositedMoney == false and self.Settings.DepositMoney == true then
+            local toDeposit = selfPlayer.Inventory.Money - self.Settings.MoneyToKeep
             if toDeposit > 0 then
                 selfPlayer:WarehousePushMoney(npc, toDeposit)
                 self.DepositedMoney = true
@@ -157,6 +167,10 @@ function WarehouseState:Run()
 
         if table.length(self.CurrentDepositList) < 1 then
             print("Warehouse done list")
+            self.State = 4
+            if self.CallWhenCompleted then
+                self.CallWhenCompleted(self)
+            end
             self:Exit()
             return
         end
@@ -173,26 +187,37 @@ function WarehouseState:Run()
         return
     end
 
-
-
     self:Exit()
 
 end
 
 
-function WarehouseState:GetItemsToDeposit()
-    local itemsToDeposit = { }
+function WarehouseState:GetItems()
+    local items = { }
     local selfPlayer = GetSelfPlayer()
     if selfPlayer then
         for k, v in pairs(selfPlayer.Inventory.Items) do
-            if Bot.Settings:CanWarehouseItem(v) then
-                -- 			v.TriedDeposit = false
-                table.insert(itemsToDeposit, { slot = v.InventoryIndex, name = v.ItemEnchantStaticStatus.Name, count = v.Count })
+            if self.ItemCheckFunction then
+                if self.ItemCheckFunction(v) then
+                    table.insert(items, { slot = v.InventoryIndex, name = v.ItemEnchantStaticStatus.Name, count = v.Count })
+                end
+            else
+                if not table.find(self.Settings.IgnoreItemsNamed, v.ItemEnchantStaticStatus.Name) then
+                    table.insert(items, { slot = v.InventoryIndex, name = v.ItemEnchantStaticStatus.Name, count = v.Count })
+                end
+
             end
         end
     end
-    return itemsToDeposit
+    return items
 end
 
 
 
+function WarehouseState:HasNpc()
+    return string.len(self.Settings.NpcName) > 0
+end
+
+function WarehouseState:GetPosition()
+    return Vector3(self.Settings.NpcPosition.X, self.Settings.NpcPosition.Y, self.Settings.NpcPosition.Z)
+end

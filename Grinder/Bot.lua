@@ -4,9 +4,9 @@ Bot.Running = false
 Bot.Fsm = FSM()
 Bot.Combat = nil
 Bot.CombatPull = nil
-Bot.VendorForced = false
 Bot.RepairForced = false
-Bot.WarehouseForced = true
+Bot.WarehouseState = WarehouseState()
+Bot.VendorState = VendorState()
 
 
 function Bot.Start()
@@ -14,9 +14,10 @@ function Bot.Start()
         
         Bot.ResetStats()
         Bot.Combat = nil
-        Bot.VendorForced = false
         Bot.RepairForced = false
-		Bot.WarehouseForced = false
+        Bot.WarehouseState.Forced = false
+        Bot.VendorState.Forced = false
+
 		Bot.SaveSettings()
         
         local combatScriptFile = Bot.Settings.CombatScript
@@ -55,7 +56,16 @@ function Bot.Start()
             print("Profile require at least 2 hotspots !")
             return
         end
-        
+        Bot.WarehouseState.Settings.NpcName = currentProfile.WarehouseNpcName
+        Bot.WarehouseState.Settings.NpcPosition = currentProfile.WarehouseNpcPosition
+        Bot.WarehouseState.CallWhenCompleted = Bot.StateComplete
+        Bot.WarehouseState.CallWhileMoving = Bot.StateMoving
+
+        Bot.VendorState.Settings.NpcName = currentProfile.VendorNpcName
+        Bot.VendorState.Settings.NpcPosition = currentProfile.VendorNpcPosition
+        Bot.VendorState.CallWhenCompleted = Bot.StateComplete
+        Bot.VendorState.CallWhileMoving = Bot.StateMoving
+
         
         ProfileEditor.Visible = false
         Navigation.MesherEnabled = false
@@ -68,8 +78,8 @@ function Bot.Start()
 		Bot.Fsm:AddState(ConsumablesState())
 		Bot.Fsm:AddState(CombatFightState())
         Bot.Fsm:AddState(LootActorState())
-        Bot.Fsm:AddState(VendorState())
-		Bot.Fsm:AddState(WarehouseState())
+        Bot.Fsm:AddState(Bot.VendorState)
+		Bot.Fsm:AddState(Bot.WarehouseState)
 		Bot.Fsm:AddState(RepairState())
         Bot.Fsm:AddState(CombatPullState())
         Bot.Fsm:AddState(RoamingState())
@@ -119,5 +129,36 @@ function Bot.LoadSettings()
         ProfileEditor.LoadProfile(Bot.Settings.LastProfileName)
     end
 end
+
+function Bot.StateMoving(state)
+    Bot.CallCombatRoaming()
+end
+
+
+function Bot.StateComplete(state)
+
+if state == Bot.VendorState then
+if Bot.Settings.WarehouseAfterVendor == true then
+Bot.WarehouseState.Forced = true
+end
+end
+--[[
+    if state == Bot.TradeManagerState then
+        if Bot.Settings.VendorafterTradeManager == true then
+            Bot.VendorState.Forced = true
+        end
+        if Bot.Settings.WarehouseAfterTradeManager == true then
+            Bot.WarehouseState.Forced = true
+        end
+    elseif state == Bot.VendorState then
+        if Bot.Settings.WarehouseAfterVendor == true then
+            Bot.WarehouseState.Forced = true
+        end
+
+    end
+    --]]
+    print("State Complete!")
+end
+
 
 Bot.ResetStats()

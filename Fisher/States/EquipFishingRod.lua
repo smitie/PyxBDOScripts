@@ -32,6 +32,10 @@ function EquipFishingRodState:NeedToRun()
     if Pyx.System.TickCount - self.LastEquipTickCount < 4000 then
         return false
     end
+
+    if ProfileEditor.CurrentProfile:GetFishSpotPosition().Distance3DFromMe > 100 then
+    return false
+    end
     
     for k,v in pairs(selfPlayer.Inventory.Items) do
         if v.ItemEnchantStaticStatus.IsFishingRod and v.Endurance > 0 then

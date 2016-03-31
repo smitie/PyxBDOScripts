@@ -153,8 +153,7 @@ else
 			end
 
 			if self.Mode == 1 and ABILITY_PINPOINT_ID ~= 0 and 
-			not selfPlayer:IsSkillOnCooldown(ABILITY_PINPOINT_ID) and
-            SkillsHelper.IsSkillUsable(ABILITY_PINPOINT_ID)
+			not selfPlayer:IsSkillOnCooldown(ABILITY_PINPOINT_ID)
 			then
 				print("Using PinPoint")
 				local ability = "BT_skill_Weakpoint"
@@ -173,9 +172,7 @@ else
 
 			if self.Mode == 2  and actorPosition.Distance3DFromMe > monsterActor.BodySize + 400 and
 			ABILITY_CHARGING_WIND_ID ~=0 and
-			not selfPlayer:IsSkillOnCooldown(ABILITY_CHARGING_WIND_ID) and selfPlayer.ManaPercent > 30
-           and SkillsHelper.IsSkillUsable(ABILITY_CHARGING_WIND_ID)
-
+			not selfPlayer:IsSkillOnCooldown(ABILITY_CHARGING_WIND_ID) -- and selfPlayer.ManaPercent > 50
 			then
 				print("Using ChargeWind")
 				selfPlayer:UseSkillAtPosition(ABILITY_CHARGING_WIND_ID,actorPosition,1000)
@@ -186,7 +183,6 @@ else
 
 			if self.Mode == 3 and actorPosition.Distance3DFromMe < monsterActor.BodySize + 1200 and ABILITY_EVASIVE_SHOT_ID ~= 0 and 
 			not selfPlayer:IsSkillOnCooldown(ABILITY_EVASIVE_SHOT_ID)
-           and SkillsHelper.IsSkillUsable(ABILITY_EVASIVE_SHOT_ID)
 			then
 				print("Using Evasive Shot: "..ABILITY_EVASIVE_SHOT_ID)
 				local rnd = math.random(1,2)

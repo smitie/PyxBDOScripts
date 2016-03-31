@@ -163,6 +163,14 @@ function DrawInventoryInfo()
                 ImGui.Text("IsFishingRod :")
                 ImGui.SameLine();
                 ImGui.Text(tostring(v.ItemEnchantStaticStatus.IsFishingRod))
+                
+                ImGui.Text("IsTradeAble :")
+                ImGui.SameLine();
+                ImGui.Text(tostring(v.ItemEnchantStaticStatus.IsTradeAble))
+                
+                ImGui.Text("CommerceType :")
+                ImGui.SameLine();
+                ImGui.Text(tostring(v.ItemEnchantStaticStatus.CommerceType))
             end
             ImGui.NextColumn()
 
