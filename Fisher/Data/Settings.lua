@@ -18,21 +18,17 @@ function Settings.new()
     self.CombatScript = ""
     
    
---    self.VendorOnInventoryFull = true
---    self.VendorOnWeight = true
---    self.VendorWhite = true
---    self.VendorGreen = true
---    self.VendorBlue = false
---    self.NeverVendor = { }
     self.VendorafterTradeManager = true
 
     self.WarehouseAfterVendor = true
     self.WarehouseAfterTradeManager = true
 
-    self.WarehouseSettings = WarehouseState.DefaultSettings
-    self.VendorSettings = VendorState.DefaultSettings
+    self.WarehouseSettings = {}
+    self.VendorSettings = {}
 
-    self.TradeManagerSettings = TradeManagerState.DefaultSettings
+    self.TradeManagerSettings = {}
+
+    self.InventoryDeleteSettings = {}
 
     self.IgnoreUntradeAbleItems = false
     

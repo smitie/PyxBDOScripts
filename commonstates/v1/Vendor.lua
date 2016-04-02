@@ -1,8 +1,7 @@
 VendorState = { }
 VendorState.__index = VendorState
 VendorState.Name = "Vendor"
-VendorState.DefaultSettings =  {NpcName = "", NpcPosition = { X = 0, Y = 0, Z = 0}, VendorOnInventoryFull = true, VendorOnWeight = true, 
-VendorWhite = true, VendorGreen = true, VendorBlue = false, VendorGold = false, IgnoreItemsNamed = {}}
+
 
 setmetatable(VendorState, {
     __call = function(cls, ...)
@@ -12,7 +11,18 @@ setmetatable(VendorState, {
 
 function VendorState.new()
     local self = setmetatable( { }, VendorState)
-        self.Settings = VendorState.DefaultSettings
+    self.Settings = {
+        NpcName = "",
+        NpcPosition = { X = 0, Y = 0, Z = 0 },
+        VendorOnInventoryFull = true,
+        VendorOnWeight = true,
+        VendorWhite = true,
+        VendorGreen = false,
+        VendorBlue = false,
+        VendorGold = false,
+        IgnoreItemsNamed = { },
+        SecondsBetweenTries = 3000
+    }
 
     self.State = 0
     -- 0 = Nothing, 1 = Moving, 2 = Arrived
@@ -35,9 +45,6 @@ function VendorState:NeedToRun()
 
     local selfPlayer = GetSelfPlayer()
 
-    if self.LastUseTimer ~= nil and not self.LastUseTimer:Expired() then
-        return false
-    end
 
     if not selfPlayer then
         return false
@@ -51,16 +58,20 @@ function VendorState:NeedToRun()
         return false
     end
 
-    if self.Forced and Navigator.CanMoveTo(self:GetPosition()) then
+    if self.Forced and not Navigator.CanMoveTo(self:GetPosition()) then
+        return false
+    elseif self.Forced == true then
         return true
-    else
-        self.Forced = false
-
     end
 
+        if self.LastUseTimer ~= nil and not self.LastUseTimer:Expired() then
+        return false
+    end
+
+
     if self.Settings.VendorOnInventoryFull and
-        selfPlayer.Inventory.FreeSlots <= 1 and
-        table.length(self:GetItemsToSell()) > 0 and
+        selfPlayer.Inventory.FreeSlots <= 2 and
+        table.length(self:GetItems()) > 0 and
         Navigator.CanMoveTo(self:GetPosition()) then
         self.Forced = true
         return true
@@ -68,7 +79,7 @@ function VendorState:NeedToRun()
 
     if self.Settings.VendorOnWeight and
         selfPlayer.WeightPercent >= 95 and
-        table.length(self:GetItemsToSell()) > 0 and
+        table.length(self:GetItems()) > 0 and
         Navigator.CanMoveTo(self:GetPosition()) then
         self.Forced = true
         return true
@@ -85,14 +96,21 @@ function VendorState:GetPosition()
     return Vector3(self.Settings.NpcPosition.X, self.Settings.NpcPosition.Y, self.Settings.NpcPosition.Z)
 end
 
+function VendorState:Reset()
+    self.State = 0
+    self.LastUseTimer = nil
+    self.SleepTimer = nil
+    self.Forced = false
+    self.DepositedMoney = false
+end
 
 function VendorState:Exit()
-    if self.State > 0 then
+    if self.State > 1 then
         if Dialog.IsTalking then
             Dialog.ClickExit()
         end
         self.State = 0
-        self.LastUseTimer = PyxTimer:New(6000)
+        self.LastUseTimer = PyxTimer:New(self.Settings.SecondsBetweenTries)
         self.LastUseTimer:Start()
         self.SleepTimer = nil
         self.Forced = false
@@ -105,21 +123,22 @@ function VendorState:Run()
     local vendorPosition = self:GetPosition()
 
     if vendorPosition.Distance3DFromMe > 300 then
-    if self.CallWhileMoving then
-        self.CallWhileMoving(self)
-    end
+        if self.CallWhileMoving then
+            self.CallWhileMoving(self)
+        end
 
         Navigator.MoveTo(vendorPosition)
         if self.State > 1 then
             self:Exit()
+            return true
         end
         self.State = 1
-        return
+        return true
     end
     Navigator.Stop()
 
     if self.SleepTimer ~= nil and self.SleepTimer:IsRunning() and not self.SleepTimer:Expired() then
-        return
+        return true
     end
 
 
@@ -128,7 +147,7 @@ function VendorState:Run()
     if table.length(npcs) < 1 then
         print("Vendor could not find any NPC's")
         self:Exit()
-        return
+        return false
     end
     table.sort(npcs, function(a, b) return a.Position:GetDistance3D(vendorPosition) < b.Position:GetDistance3D(vendorPosition) end)
 
@@ -139,7 +158,7 @@ function VendorState:Run()
         self.SleepTimer = PyxTimer:New(1)
         self.SleepTimer:Start()
         self.State = 2
-        return
+        return true
     end
 
 
@@ -147,14 +166,14 @@ function VendorState:Run()
         if not Dialog.IsTalking then
             print("Vendor Error Dialog didn't open")
             self:Exit()
-            return
+            return false
         end
         BDOLua.Execute("npcShop_requestList()")
         self.SleepTimer = PyxTimer:New(1)
         self.SleepTimer:Start()
         self.State = 3
         self.CurrentDepositList = self:GetItems()
-        return
+        return true
     end
 
     if self.State == 3 then
@@ -162,11 +181,11 @@ function VendorState:Run()
         if table.length(self.CurrentDepositList) < 1 then
             print("Vendor done list")
             self.State = 4
-    if self.CallWhenCompleted then
-        self.CallWhenCompleted(self)
-    end
-    self:Exit()
-            return
+            if self.CallWhenCompleted then
+                self.CallWhenCompleted(self)
+            end
+            self:Exit()
+            return true
         end
 
         local item = self.CurrentDepositList[1]
@@ -178,24 +197,24 @@ function VendorState:Run()
             self.SleepTimer:Start()
         end
         table.remove(self.CurrentDepositList, 1)
-        return
+        return true
     end
 
     self:Exit()
-
+    return false
 end
 
 
 function VendorState:CanSellGrade(item)
-  
+
     if self.Settings.VendorWhite and item.ItemEnchantStaticStatus.Grade == ITEM_GRADE_WHITE then
         return true
     end
-    
+
     if self.Settings.VendorGreen and item.ItemEnchantStaticStatus.Grade == ITEM_GRADE_GREEN then
         return true
     end
-    
+
     if self.Settings.VendorBlue and item.ItemEnchantStaticStatus.Grade == ITEM_GRADE_BLUE then
         return true
     end
@@ -213,16 +232,16 @@ function VendorState:GetItems()
     local selfPlayer = GetSelfPlayer()
     if selfPlayer then
         for k, v in pairs(selfPlayer.Inventory.Items) do
-        if self.ItemCheckFunction then
-            if self.ItemCheckFunction(v) then
-                table.insert(itemsToDeposit, { slot = v.InventoryIndex, name = v.ItemEnchantStaticStatus.Name, count = v.Count })
-            end
-        else
-        if not table.find(self.Settings.IgnoreItemsNamed,v.ItemEnchantStaticStatus.Name)  and self:CanSellGrade(v) == true then
-                table.insert(itemsToDeposit, { slot = v.InventoryIndex, name = v.ItemEnchantStaticStatus.Name, count = v.Count })
+            if self.ItemCheckFunction then
+                if self.ItemCheckFunction(v) then
+                    table.insert(itemsToDeposit, { slot = v.InventoryIndex, name = v.ItemEnchantStaticStatus.Name, count = v.Count })
+                end
+            else
+                if not table.find(self.Settings.IgnoreItemsNamed, v.ItemEnchantStaticStatus.Name) and self:CanSellGrade(v) == true then
+                    table.insert(itemsToDeposit, { slot = v.InventoryIndex, name = v.ItemEnchantStaticStatus.Name, count = v.Count })
                 end
 
-        end
+            end
         end
     end
     return itemsToDeposit

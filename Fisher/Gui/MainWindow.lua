@@ -55,7 +55,26 @@ function MainWindow.DrawMainWindow()
             _, Bot.Settings.IgnoreUntradeAbleItems = ImGui.Checkbox("Ignore untradeable items##id_guid_looting_ignore_untradeable", Bot.Settings.IgnoreUntradeAbleItems)
         end
         MainWindow.UpdateInventoryList()
+        if ImGui.CollapsingHeader("Inventory Management", "id_gui_inv_manage", true, false) then
+        ImGui.Text("Always Delete these Items")
+                    valueChanged, MainWindow.InventoryComboSelectedIndex = ImGui.Combo("##id_guid_inv_inventory_combo_select", MainWindow.InventoryComboSelectedIndex, MainWindow.InventoryName)
+            if valueChanged then
+                local inventoryName = MainWindow.InventoryName[MainWindow.InventoryComboSelectedIndex]
+                if not table.find(Bot.Settings.InventoryDeleteSettings.DeleteItems, inventoryName) then
 
+                    table.insert(Bot.Settings.InventoryDeleteSettings.DeleteItems, inventoryName)
+                end
+                MainWindow.InventoryComboSelectedIndex = 0
+            end
+            _, MainWindow.InventorySelectedIndex = ImGui.ListBox("##id_guid_inv_Delete", MainWindow.InventorySelectedIndex,Bot.Settings.InventoryDeleteSettings.DeleteItems, 5)
+            if ImGui.Button("Remove Item##id_guid_inv_delete_remove", ImVec2(ImGui.GetContentRegionAvailWidth(), 20)) then
+                if MainWindow.InventorySelectedIndex > 0 and MainWindow.InventorySelectedIndex <= table.length(Bot.Settings.InventoryDeleteSettings.DeleteItems) then
+                    table.remove(Bot.Settings.InventoryDeleteSettings.DeleteItems, MainWindow.InventorySelectedIndex)
+                    MainWindow.InventorySelectedIndex = 0
+                end
+            end
+
+end
         if ImGui.CollapsingHeader("Vendor", "id_gui_vendor", true, false) then
             _, Bot.Settings.VendorSettings.VendorOnInventoryFull = ImGui.Checkbox("Vendor when inventory is full##id_guid_vendor_full_inventory", Bot.Settings.VendorSettings.VendorOnInventoryFull)
             _, Bot.Settings.VendorafterTradeManager = ImGui.Checkbox("Vendor after Trader##id_guid_vendor_full_inventory", Bot.Settings.VendorafterTradeManager)

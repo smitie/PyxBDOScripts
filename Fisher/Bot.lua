@@ -5,6 +5,7 @@ Bot.Fsm = FSM()
 Bot.WarehouseState = WarehouseState()
 Bot.VendorState = VendorState()
 Bot.TradeManagerState = TradeManagerState()
+Bot.InventoryDeleteState = InventoryDeleteState()
 
 function Bot.Start()
     if not Bot.Running then
@@ -48,6 +49,7 @@ function Bot.Start()
         Bot.Fsm.ShowOutput = true
         Bot.Fsm:AddState(BuildNavigationState())
         Bot.Fsm:AddState(LootState())
+        Bot.Fsm:AddState(Bot.InventoryDeleteState)
         Bot.Fsm:AddState(HookFishHandleGameState())
         Bot.Fsm:AddState(HookFishState())
         Bot.Fsm:AddState(UnequipFishingRodState())
@@ -65,6 +67,10 @@ end
 function Bot.Stop()
     Navigator.Stop()
     Bot.Running = false
+    Bot.WarehouseState:Reset()
+    Bot.VendorState:Reset()
+    Bot.TradeManagerState:Reset()
+
 end
 
 function Bot.ResetStats()
@@ -84,7 +90,13 @@ end
 
 function Bot.LoadSettings()
     local json = JSON:new()
+
     Bot.Settings = Settings()
+    Bot.Settings.WarehouseSettings = Bot.WarehouseState.Settings
+    Bot.Settings.VendorSettings = Bot.VendorState.Settings
+    Bot.Settings.TradeManagerSettings = Bot.TradeManagerState.Settings
+    Bot.Settings.InventoryDeleteSettings = Bot.InventoryDeleteState.Settings
+
     table.merge(Bot.Settings, json:decode(Pyx.FileSystem.ReadFile("Settings.json")))
     if string.len(Bot.Settings.LastProfileName) > 0 then
         ProfileEditor.LoadProfile(Bot.Settings.LastProfileName)

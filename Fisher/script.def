@@ -19,6 +19,7 @@ file=States/Idle.lua
 file=../commonstates/v1/TradeManager.lua
 file=../commonstates/v1/Vendor.lua
 file=../commonstates/v1/Warehouse.lua
+file=../commonstates/v1/InventoryDeleteState.Lua
 file=Helpers/Rendering.lua
 file=Bot.lua
 file=Main.lua

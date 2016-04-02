@@ -1,7 +1,7 @@
 TradeManagerState = { }
 TradeManagerState.__index = TradeManagerState
 TradeManagerState.Name = "TradeManager"
-TradeManagerState.DefaultSettings = { NpcName = "", NpcPosition = { X = 0, Y = 0, Z = 0 }, SellAll = true, TradeManagerOnInventoryFull = true, IgnoreItemsNamed = {} }
+--TradeManagerState.DefaultSettings = { NpcName = "", NpcPosition = { X = 0, Y = 0, Z = 0 }, SellAll = true, TradeManagerOnInventoryFull = true, IgnoreItemsNamed = {}, SecondsBetweenTries = 3000 }
 
 setmetatable(TradeManagerState, {
     __call = function(cls, ...)
@@ -11,7 +11,7 @@ setmetatable(TradeManagerState, {
 
 function TradeManagerState.new()
     local self = setmetatable( { }, TradeManagerState)
-    self.Settings = TradeManagerState.DefaultSettings
+    self.Settings = { NpcName = "", NpcPosition = { X = 0, Y = 0, Z = 0 }, SellAll = true, TradeManagerOnInventoryFull = true, IgnoreItemsNamed = {}, SecondsBetweenTries = 3000 }
 
     self.State = 0
     -- 0 = Nothing, 1 = Moving, 2 = Arrived
@@ -49,11 +49,12 @@ function TradeManagerState:NeedToRun()
         return false
     end
 
-    if self.Forced and Navigator.CanMoveTo(self:GetPosition()) then
+       if self.Forced and not Navigator.CanMoveTo(self:GetPosition()) then
+        return false
+    elseif self.Forced == true then
         return true
-    else
-        self.Forced = false
     end
+
 
 
     if self.LastTradeUseTimer ~= nil and not self.LastTradeUseTimer:Expired() then
@@ -72,8 +73,15 @@ function TradeManagerState:NeedToRun()
     return false
 end
 
+function TradeManagerState:Reset()
+        self.State = 0
+        self.LastTradeUseTimer = nil
+        self.SleepTimer = nil
+        self.Forced = false
+end
+
 function TradeManagerState:Exit()
-    if self.State > 0 then
+    if self.State > 1 then
         if TradeMarket.IsTrading then
             TradeMarket.Close()
         end
@@ -82,7 +90,7 @@ function TradeManagerState:Exit()
             Dialog.ClickExit()
         end
         self.State = 0
-        self.LastTradeUseTimer = PyxTimer:New(6000)
+        self.LastTradeUseTimer = PyxTimer:New(self.Settings.SecondsBetweenTries)
         self.LastTradeUseTimer:Start()
         self.SleepTimer = nil
         self.Forced = false
@@ -90,6 +98,9 @@ function TradeManagerState:Exit()
     end
 
 end
+
+
+
 
 function TradeManagerState:Run()
 
@@ -103,6 +114,7 @@ function TradeManagerState:Run()
         Navigator.MoveTo(TradeManagerPosition)
         if self.State > 1 then
             self:Exit()
+            return
         end
         self.State = 1
         return

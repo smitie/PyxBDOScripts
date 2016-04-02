@@ -93,8 +93,8 @@ else
             
 				if actorPosition.Distance3DFromMe <= monsterActor.BodySize + 450 and  
 			ABILITY_EVASIVE_EXLPOSION_SHOT_ID ~= 0 and
-			SkillsHelper.IsSkillUsable(ABILITY_EVASIVE_EXLPOSION_SHOT_ID) 
---				not selfPlayer:IsSkillOnCooldown(ABILITY_EVASIVE_EXLPOSION_SHOT_ID)
+			SkillsHelper.IsSkillUsable(ABILITY_EVASIVE_EXLPOSION_SHOT_ID) and
+			not selfPlayer:IsSkillOnCooldown(ABILITY_EVASIVE_EXLPOSION_SHOT_ID)
 			then
 				print("Evasive Shot!")
 				local rnd = math.random(1,3)
@@ -153,6 +153,7 @@ else
 			end
 
 			if self.Mode == 1 and ABILITY_PINPOINT_ID ~= 0 and 
+			not selfPlayer:IsSkillOnCooldown(ABILITY_PINPOINT_ID) and
 			not selfPlayer:IsSkillOnCooldown(ABILITY_PINPOINT_ID)
 			then
 				print("Using PinPoint")
@@ -172,7 +173,9 @@ else
 
 			if self.Mode == 2  and actorPosition.Distance3DFromMe > monsterActor.BodySize + 400 and
 			ABILITY_CHARGING_WIND_ID ~=0 and
-			not selfPlayer:IsSkillOnCooldown(ABILITY_CHARGING_WIND_ID) -- and selfPlayer.ManaPercent > 50
+			not selfPlayer:IsSkillOnCooldown(ABILITY_CHARGING_WIND_ID)  and selfPlayer.ManaPercent > 30
+            and 			not selfPlayer:IsSkillOnCooldown(ABILITY_CHARGING_WIND_ID)
+
 			then
 				print("Using ChargeWind")
 				selfPlayer:UseSkillAtPosition(ABILITY_CHARGING_WIND_ID,actorPosition,1000)
@@ -183,6 +186,7 @@ else
 
 			if self.Mode == 3 and actorPosition.Distance3DFromMe < monsterActor.BodySize + 1200 and ABILITY_EVASIVE_SHOT_ID ~= 0 and 
 			not selfPlayer:IsSkillOnCooldown(ABILITY_EVASIVE_SHOT_ID)
+            and not selfPlayer:IsSkillOnCooldown(ABILITY_EVASIVE_SHOT_ID) 
 			then
 				print("Using Evasive Shot: "..ABILITY_EVASIVE_SHOT_ID)
 				local rnd = math.random(1,2)
@@ -209,6 +213,7 @@ else
             ABILITY_BLASTING_GUST_ID ~= 0 and 
             SkillsHelper.IsSkillUsable(ABILITY_BLASTING_GUST_ID) and
             not selfPlayer:IsSkillOnCooldown(ABILITY_BLASTING_GUST_ID)
+
             then
                 selfPlayer:UseSkillAtPosition(ABILITY_BLASTING_GUST_ID,actorPosition, 2000)
             end

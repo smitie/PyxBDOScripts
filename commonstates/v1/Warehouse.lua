@@ -2,7 +2,7 @@
 WarehouseState = { }
 WarehouseState.__index = WarehouseState
 WarehouseState.Name = "Warehouse"
-WarehouseState.DefaultSettings = { NpcName = "", NpcPosition = { X = 0, Y = 0, Z = 0 }, DepositItems = true, DepositMoney = true, MoneyToKeep = 10000, IgnoreItemsNamed = { } }
+--WarehouseState.DefaultSettings = { NpcName = "", NpcPosition = { X = 0, Y = 0, Z = 0 }, DepositItems = true, DepositMoney = true, MoneyToKeep = 10000, IgnoreItemsNamed = { }, SecondsBetweenTries = 3000}
 
 setmetatable(WarehouseState, {
     __call = function(cls, ...)
@@ -13,7 +13,7 @@ setmetatable(WarehouseState, {
 function WarehouseState.new()
     local self = setmetatable( { }, WarehouseState)
 
-    self.Settings = WarehouseState.DefaultSettings
+    self.Settings = { NpcName = "", NpcPosition = { X = 0, Y = 0, Z = 0 }, DepositItems = true, DepositMoney = true, MoneyToKeep = 10000, IgnoreItemsNamed = { }, SecondsBetweenTries = 3000}
 
     self.State = 0
     -- 0 = Nothing, 1 = Moving, 2 = Arrived
@@ -37,9 +37,6 @@ function WarehouseState:NeedToRun()
 
     local selfPlayer = GetSelfPlayer()
 
-    if self.LastUseTimer ~= nil and not self.LastUseTimer:Expired() then
-        return false
-    end
 
     if not selfPlayer then
         return false
@@ -53,13 +50,17 @@ function WarehouseState:NeedToRun()
         return false
     end
 
-    if self.Forced and Navigator.CanMoveTo(self:GetPosition()) then
+    if self.Forced and not Navigator.CanMoveTo(self:GetPosition()) then
+        return false
+    elseif self.Forced == true then
         return true
-    else
-        self.Forced = false
     end
 
-    if self.Settings.DepositItems and selfPlayer.Inventory.FreeSlots <= 1 and
+        if self.LastUseTimer ~= nil and not self.LastUseTimer:Expired() then
+        return false
+    end
+
+    if self.Settings.DepositItems and selfPlayer.Inventory.FreeSlots <= 2 and
         table.length(self:GetItems()) > 0 and
         Navigator.CanMoveTo(self:GetPosition()) then
         self.Forced = true
@@ -76,14 +77,23 @@ function WarehouseState:NeedToRun()
     return false
 end
 
+function WarehouseState:Reset()
+        self.State = 0
+        self.LastUseTimer = nil
+        self.SleepTimer = nil
+        self.Forced = false
+        self.DepositedMoney = false
+end
+
+
 function WarehouseState:Exit()
 
-    if self.State > 0 then
+    if self.State > 1 then
         if Dialog.IsTalking then
             Dialog.ClickExit()
         end
         self.State = 0
-        self.LastUseTimer = PyxTimer:New(6000)
+        self.LastUseTimer = PyxTimer:New(self.Settings.SecondsBetweenTries)
         self.LastUseTimer:Start()
         self.SleepTimer = nil
         self.Forced = false
@@ -106,6 +116,7 @@ function WarehouseState:Run()
         Navigator.MoveTo(vendorPosition)
         if self.State > 1 then
             self:Exit()
+            return
         end
         self.State = 1
         return

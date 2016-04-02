@@ -35,7 +35,7 @@ function CombatPullState:NeedToRun()
     for k, v in pairs(monsters) do
         if v.IsVisible and
             v.IsAlive and
-            v.CharacterStaticStatus.TribeType ~= TRIBE_TYPE_UNTRIBE and
+            --v.CharacterStaticStatus.TribeType ~= TRIBE_TYPE_UNTRIBE and
             v.CanAttack and
             v.Position.Distance3DFromMe <= Bot.Settings.Advanced.PullDistance and
             not self.MobIgnoreList:Contains(v.Key) and

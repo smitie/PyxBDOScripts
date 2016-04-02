@@ -71,7 +71,7 @@ function MainWindow.DrawMainWindow()
                 end
                 ImGui.SameLine()
                 if ImGui.Button("Force repair", ImVec2(ImGui.GetContentRegionAvailWidth(), 20)) then
-                    Bot.RepairForced = true
+                    Bot.RepairState.Forced = true
                 end
             end
         end
@@ -125,18 +125,18 @@ function MainWindow.DrawMainWindow()
 
 
         if ImGui.CollapsingHeader("Looting", "id_gui_looting", true, false) then
-            _, Bot.Settings.TakeLoot = ImGui.Checkbox("Take loots##id_guid_looting_take_loot", Bot.Settings.TakeLoot)
+            _, Bot.Settings.LootSettings.TakeLoot = ImGui.Checkbox("Take loots##id_guid_looting_take_loot", Bot.Settings.LootSettings.TakeLoot)
         end
 
         if ImGui.CollapsingHeader("Death action", "id_gui_death_action", true, false) then
-            if ImGui.RadioButton("Stop bot##death_action_stop_bot", Bot.Settings.OnDeathAction == SETTINGS_ON_DEATH_STOP_BOT) then
-                Bot.Settings.OnDeathAction = SETTINGS_ON_DEATH_STOP_BOT
+            if ImGui.RadioButton("Stop bot##death_action_stop_bot", Bot.Settings.DeathSettings.ReviveMethod == DeathState.SETTINGS_ON_DEATH_ONLY_CALL_WHEN_COMPLETED) then
+            Bot.Settings.DeathSettings.ReviveMethod = DeathState.SETTINGS_ON_DEATH_ONLY_CALL_WHEN_COMPLETED
             end
-            if ImGui.RadioButton("Revive at nearest node##death_action_revive_node", Bot.Settings.OnDeathAction == SETTINGS_ON_DEATH_REVIVE_NODE) then
-                Bot.Settings.OnDeathAction = SETTINGS_ON_DEATH_REVIVE_NODE
+            if ImGui.RadioButton("Revive at nearest node##death_action_revive_node", Bot.Settings.DeathSettings.ReviveMethod == DeathState.SETTINGS_ON_DEATH_REVIVE_NODE) then
+            Bot.Settings.DeathSettings.ReviveMethod = DeathState.SETTINGS_ON_DEATH_REVIVE_NODE
             end
-            if ImGui.RadioButton("Revive at nearest village##death_action_revive_village", Bot.Settings.OnDeathAction == SETTINGS_ON_DEATH_REVIVE_VILLAGE) then
-                Bot.Settings.OnDeathAction = SETTINGS_ON_DEATH_REVIVE_VILLAGE
+            if ImGui.RadioButton("Revive at nearest village##death_action_revive_village", Bot.Settings.DeathSettings.ReviveMethod == DeathState.SETTINGS_ON_DEATH_REVIVE_VILLAGE) then
+            Bot.Settings.DeathSettings.ReviveMethod = DeathState.SETTINGS_ON_DEATH_REVIVE_VILLAGE
             end
         end
 
@@ -269,7 +269,7 @@ function MainWindow.DrawMainWindow()
             ImGui.Text("Change with caution!!!")
             ImGui.Text(" ")
             _, Bot.Settings.Advanced.HotSpotRadius = ImGui.SliderInt("Hotspot Radius##id_gui_advanced_hs_radius", Bot.Settings.Advanced.HotSpotRadius, 500, 10000)
-            _, Bot.Settings.Advanced.LootRadius = ImGui.SliderInt("Loot Radius##id_gui_advanced_loot_radius", Bot.Settings.Advanced.LootRadius, 500, 10000)
+            _, Bot.Settings.LootSettings.LootRadius = ImGui.SliderInt("Loot Radius##id_gui_advanced_loot_radius", Bot.Settings.LootSettings.LootRadius, 500, 10000)
             _, Bot.Settings.Advanced.PullDistance = ImGui.SliderInt("Pull Distance##id_gui_advanced_pull_distance", Bot.Settings.Advanced.PullDistance, 500, 10000)
             _, Bot.Settings.Advanced.PullSecondsUntillIgnore = ImGui.SliderInt("Pull Seconds untill ignore##id_gui_advanced_pull_seconds", Bot.Settings.Advanced.PullSecondsUntillIgnore, 5, 30)
             _, Bot.Settings.Advanced.CombatMaxDistanceFromMe = ImGui.SliderInt("Combat Max Distance##id_gui_advanced_combat_maxdistance", Bot.Settings.Advanced.CombatMaxDistanceFromMe, 1000, 5000)

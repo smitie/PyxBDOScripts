@@ -21,7 +21,7 @@ function CombatAutoAttack:Attack(monsterActor)
         else
             Navigator.Stop()
             if not selfPlayer.IsActionPending then
-                selfPlayer:DoActionAtPosition("BT_skill_ChargeShot_F4", actorPosition, 10)
+                selfPlayer:DoActionAtPosition("BT_skill_WindblowShot_Fire", actorPosition, 0)
                 --selfPlayer:Interact(monsterActor) -- Auto attack for the win !
             end
         end
